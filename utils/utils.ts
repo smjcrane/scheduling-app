@@ -8,9 +8,6 @@ export const getNumHalfHours = (start: Date, end: Date) => {
   return lengthOfDay / 1000 / 60 / 30;
 };
 
-export const arraysEqual = (a: any[], b: any[]) =>
-  a.length === b.length && a.every((value) => b.includes(value));
-
 export const convertParamDateTime = (date: string, time: string) => {
   return new Date(`2025-${date}T${time}:00+02:00`);
 };
