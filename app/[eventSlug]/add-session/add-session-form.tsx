@@ -235,7 +235,7 @@ function getAvailableStartTimes(
           new Date(session["Start time"]).getTime() <= t &&
           new Date(session["End time"]).getTime() > t
       );
-      if (!!sessionNow) {
+      if (sessionNow) {
         startTimes.push({
           formattedTime,
           time: t,
@@ -393,7 +393,7 @@ function SelectDuration(props: {
     { value: 150, label: "2.5 hours" },
     { value: 180, label: "3 hours" },
   ];
-  const availableDurations = !!maxDuration
+  const availableDurations = maxDuration
     ? durations.filter(({ value }) => value <= maxDuration)
     : durations;
   return (
