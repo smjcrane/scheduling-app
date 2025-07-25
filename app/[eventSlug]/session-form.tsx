@@ -16,6 +16,10 @@ import { Location } from "@/db/locations";
 import { Session } from "@/db/sessions";
 import { ConfirmDeletionModal } from "../modals";
 
+interface ErrorResponse {
+  message: string;
+}
+
 export function SessionForm(props: {
   eventName: string;
   days: Day[];
@@ -126,8 +130,8 @@ export function SessionForm(props: {
     } else {
       let errorMessage = "Failed to update session";
       try {
-        const errorData = (await res.json()) as { message: string };
-        errorMessage = errorData.message;
+        const errorData = (await res.json()) as ErrorResponse;
+        errorMessage = errorData.message || errorMessage;
       } catch {
         // Response is not valid JSON, use status text or generic message
         errorMessage = res.statusText || `Server error (${res.status})`;
@@ -160,8 +164,8 @@ export function SessionForm(props: {
     } else {
       let errorMessage = "Failed to delete session";
       try {
-        const errorData = (await res.json()) as { message: string };
-        errorMessage = errorData.message;
+        const errorData = (await res.json()) as ErrorResponse;
+        errorMessage = errorData.message || errorMessage;
       } catch {
         errorMessage = res.statusText || `Server error (${res.status})`;
       }
