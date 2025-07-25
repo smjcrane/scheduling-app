@@ -285,7 +285,7 @@ export function SessionForm(props: {
           !duration ||
           isSubmitting
         }
-        onClick={Submit}
+        onClick={() => void Submit()}
       >
         Submit
       </button>
