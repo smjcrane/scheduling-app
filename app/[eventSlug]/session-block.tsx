@@ -230,8 +230,8 @@ export function RealSessionCard(props: {
             numHalfHours > 2
               ? "line-clamp-3"
               : numHalfHours > 1
-              ? "line-clamp-2"
-              : "line-clamp-1"
+                ? "line-clamp-2"
+                : "line-clamp-1"
           )}
         >
           {formattedHostNames}
