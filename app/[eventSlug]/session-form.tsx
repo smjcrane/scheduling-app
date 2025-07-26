@@ -80,7 +80,7 @@ export function SessionForm(props: {
   const { user: currentUser } = useContext(UserContext);
   let initialHosts: Guest[] = [];
   if (!sessionID) {
-    initialHosts = guests.filter(g => g.ID == currentUser);
+    initialHosts = guests.filter((g) => g.ID == currentUser);
   }
   const [hosts, setHosts] = useState<Guest[]>(initialHosts);
   useEffect(() => {
