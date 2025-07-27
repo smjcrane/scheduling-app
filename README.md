@@ -60,4 +60,4 @@ npm run test
 npx playwright test
 ```
 
-These are currently highly dependent on specific values in the database.
+The tests expect specific values to be in the database. To set up a test database instance, run `tests/init.ts`. This will overwrite the entire database.
