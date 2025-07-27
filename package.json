@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "lint-watch": "watchexec -c -w app -w db -w utils \"next lint --fix\"",
-    "test": "npx playwright test && npx playwright show-report"
+    "test": "npx playwright test && npx playwright show-report",
     "prettier": "prettier --write app/ db/ utils/"
   },
   "dependencies": {
