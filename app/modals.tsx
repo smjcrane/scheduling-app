@@ -38,12 +38,16 @@ export function CurrentUserModal(props: {
   guests: Guest[];
   open: boolean;
   close: () => void;
-  rsvp: () => void;
+  rsvp: () => Promise<void>;
   sessionInfoDisplay?: React.ReactNode;
   rsvpd: boolean;
 }) {
   const { guests, open, close, rsvp, sessionInfoDisplay, rsvpd } = props;
   const { user } = useContext(UserContext);
+  const onClickHandler = async () => {
+    await rsvp();
+    close();
+  };
   return (
     <Modal open={open} setOpen={close} hideClose={!!user}>
       {sessionInfoDisplay}
@@ -57,10 +61,7 @@ export function CurrentUserModal(props: {
         <button
           type="button"
           className="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-rose-400 text-base font-medium text-white hover:bg-rose-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-400 sm:text-sm mt-4"
-          onClick={() => {
-            rsvp();
-            close();
-          }}
+          onClick={() => void onClickHandler()}
         >
           {rsvpd ? "Un-RSVP" : "RSVP"}
         </button>
@@ -110,6 +111,50 @@ export function ExportScheduleModal() {
         </div>
       </Modal>
     </div>
+  );
+}
+
+export function ConfirmDeletionModal(props: {
+  btnDisabled: boolean;
+  confirm: () => Promise<void>;
+}) {
+  const { btnDisabled, confirm } = props;
+  const [open, setOpen] = useState(false);
+
+  const clickHandler = async () => {
+    await confirm();
+    setOpen(false);
+  };
+  return (
+    <>
+      <button
+        type="submit"
+        className="bg-white-400 text-red-900 font-semibold py-2 rounded shadow disabled:bg-gray-200 border-2 border-red-500 mx-auto px-12 hover:bg-rose-100 active:bg-rose-100"
+        onClick={() => setOpen(true)}
+        disabled={btnDisabled}
+      >
+        Delete
+      </button>
+      <Modal open={open} setOpen={setOpen} hideClose={true}>
+        <p>Delete session?</p>
+        <div className="mt-4">
+          <button
+            type="button"
+            className="rounded-md border border-transparent shadow-sm px-6 py-2 bg-rose-400 font-medium text-white hover:bg-rose-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-400"
+            onClick={() => void clickHandler()}
+          >
+            Yes
+          </button>
+          <button
+            type="button"
+            className="ml-4 rounded-md border border-black shadow-sm px-6 py-2 bg-white font-medium text-black hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200"
+            onClick={() => setOpen(false)}
+          >
+            No
+          </button>
+        </div>
+      </Modal>
+    </>
   );
 }
 

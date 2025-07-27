@@ -1,0 +1,34 @@
+name: Check pull requests
+
+on:
+  pull_request:
+
+jobs:
+  build-and-lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Install bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install Dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+  check-with-prettier:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Check the code with Prettier
+        uses: creyD/prettier_action@v4.6
+        with:
+          dry: true
+          no_commit: true
+          prettier_options: "--check app/ db/ utils/"

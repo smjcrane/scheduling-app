@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { ClockIcon, PlusIcon } from "@heroicons/react/24/outline";
-import { UserIcon } from "@heroicons/react/24/solid";
+import { UserIcon, PencilSquareIcon } from "@heroicons/react/24/solid";
 import { Session } from "@/db/sessions";
 import { Day } from "@/db/days";
 import { Location } from "@/db/locations";
@@ -9,6 +9,7 @@ import { RSVP } from "@/db/rsvps";
 import { Tooltip } from "./tooltip";
 import { DateTime } from "luxon";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useContext, useState } from "react";
 import { CurrentUserModal } from "../modals";
 import { UserContext } from "../context";
@@ -27,13 +28,14 @@ export function SessionBlock(props: {
   const endTime = new Date(session["End time"]).getTime();
   const sessionLength = endTime - startTime;
   const numHalfHours = sessionLength / 1000 / 60 / 30;
+  const rsvpdForEvent = rsvpsForEvent.length > 0;
   const isBlank = !session.Title;
   const isBookable =
     !!isBlank &&
     !!location.Bookable &&
     startTime > new Date().getTime() &&
-    startTime >= new Date(day["Start bookings"]).getTime() &&
-    startTime < new Date(day["End bookings"]).getTime();
+    startTime >= day.StartBookings.getTime() &&
+    startTime < day.EndBookings.getTime();
   return isBookable ? (
     <BookableSessionCard
       eventName={eventName}
@@ -47,11 +49,12 @@ export function SessionBlock(props: {
         <BlankSessionCard numHalfHours={numHalfHours} />
       ) : (
         <RealSessionCard
+          eventName={eventName}
           session={session}
           location={location}
           numHalfHours={numHalfHours}
           guests={guests}
-          rsvpsForEvent={rsvpsForEvent}
+          rsvpd={rsvpdForEvent}
         />
       )}
     </>
@@ -71,7 +74,7 @@ export function BookableSessionCard(props: {
   const timeParam = DateTime.fromISO(session["Start time"])
     .setZone("America/Los_Angeles")
     .toFormat("HH:mm");
-  const eventSlug = eventName.replace(" ", "-");
+  const eventSlug = eventName.replace(/ /g, "-");
   return (
     <div className={`row-span-${numHalfHours} my-0.5 min-h-10`}>
       <Link
@@ -101,38 +104,57 @@ async function rsvp(guestId: string, sessionId: string, remove = false) {
 }
 
 export function RealSessionCard(props: {
+  eventName: string;
   session: Session;
   numHalfHours: number;
   location: Location;
   guests: Guest[];
-  rsvpsForEvent: RSVP[];
+  rsvpd: boolean;
 }) {
-  const { session, numHalfHours, location, guests, rsvpsForEvent } = props;
+  const { eventName, session, numHalfHours, location, guests, rsvpd } = props;
   const { user: currentUser } = useContext(UserContext);
-  const [optimisticRSVPResponse, setOptimisticRSVPResponse] = useState<
-    boolean | null
-  >(null);
-  const rsvpStatus =
-    optimisticRSVPResponse !== null
-      ? optimisticRSVPResponse
-      : rsvpsForEvent.length > 0;
+  const router = useRouter();
+  const [toggledRSVP, setToggledRSVP] = useState<boolean>(false);
+  function rsvpStatus() {
+    if (toggledRSVP) {
+      return !rsvpd;
+    } else {
+      return rsvpd;
+    }
+  }
   const hostStatus = currentUser && session.Hosts?.includes(currentUser);
-  const lowerOpacity = !rsvpStatus && !hostStatus;
+  const lowerOpacity = !rsvpStatus() && !hostStatus;
   const formattedHostNames = session["Host name"]?.join(", ") ?? "No hosts";
   const [rsvpModalOpen, setRsvpModalOpen] = useState(false);
   const screenWidth = useScreenWidth();
   const onMobile = screenWidth < 640;
 
-  const handleClick = () => {
+  const handleClick = async () => {
+    if (hostStatus) {
+      return;
+    }
     if (currentUser && !onMobile) {
-      rsvp(currentUser, session.ID, !!rsvpStatus);
-      setOptimisticRSVPResponse(!rsvpStatus);
+      await rsvp(currentUser, session.ID, rsvpStatus());
+      setToggledRSVP(!toggledRSVP);
     } else {
       setRsvpModalOpen(true);
     }
   };
+  const onClickEdit = () => {
+    const url = `/${eventName.replace(/ /g, "-")}/edit-session?sessionID=${
+      session.ID
+    }`;
+    router.push(url);
+  };
 
-  const numRSVPs = session["Num RSVPs"] + (optimisticRSVPResponse ? 1 : 0);
+  let numRSVPs = session["Num RSVPs"];
+  if (toggledRSVP) {
+    if (rsvpd) {
+      numRSVPs -= 1;
+    } else {
+      numRSVPs += 1;
+    }
+  }
   const SessionInfoDisplay = () => (
     <>
       <h1 className="text-lg font-bold leading-tight">{session.Title}</h1>
@@ -171,13 +193,13 @@ export function RealSessionCard(props: {
         close={() => setRsvpModalOpen(false)}
         open={rsvpModalOpen}
         // rsvp here should actually be rsvp
-        rsvp={() => {
+        rsvp={async () => {
           if (!currentUser) return;
-          rsvp(currentUser, session.ID, !!rsvpStatus);
-          setOptimisticRSVPResponse(!rsvpStatus);
+          await rsvp(currentUser, session.ID, rsvpStatus());
+          setToggledRSVP(!toggledRSVP);
         }}
         guests={guests}
-        rsvpd={rsvpStatus}
+        rsvpd={rsvpStatus()}
         sessionInfoDisplay={<SessionInfoDisplay />}
       />
       <button
@@ -192,7 +214,7 @@ export function RealSessionCard(props: {
               }-${600}`,
           !lowerOpacity && "text-white"
         )}
-        onClick={handleClick}
+        onClick={() => void handleClick()}
       >
         <p
           className={clsx(
@@ -208,12 +230,22 @@ export function RealSessionCard(props: {
             numHalfHours > 2
               ? "line-clamp-3"
               : numHalfHours > 1
-              ? "line-clamp-2"
-              : "line-clamp-1"
+                ? "line-clamp-2"
+                : "line-clamp-1"
           )}
         >
           {formattedHostNames}
         </p>
+        {hostStatus && (
+          <PencilSquareIcon
+            onClick={onClickEdit}
+            className={clsx(
+              "absolute h-5 w-5 top-0 right-0",
+              "text-gray-600 hover:text-black",
+              "cursor-pointer"
+            )}
+          />
+        )}
         <div
           className={clsx(
             "absolute py-[1px] px-1 rounded-tl text-[10px] bottom-0 right-0 flex gap-0.5 items-center",
