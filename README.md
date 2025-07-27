@@ -60,4 +60,4 @@ npm run test
 npx playwright test
 ```
 
-The tests expect specific values to be in the database. To set up a test database instance, run `tests/init.ts`. This will overwrite the entire database.
+The tests expect specific values to be in the database. To set up a test database instance, run `tests/init.ts`. This will overwrite the entire database, so it is recommended to use a different airtable database specified in .env.test.local.
